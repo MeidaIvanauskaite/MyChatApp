@@ -1,0 +1,84 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - cache
+      - auth
+      - message-queue
+      - prometheus
+      - grafana
+    networks:
+      - monitoring
+
+  db:
+    image: mongo:latest
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - monitoring
+
+  cache:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - monitoring
+
+  auth:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
+      - DB_VENDOR=h2  # Use the default embedded H2 database for testing
+    command: ["start-dev"]
+    ports:
+      - "8081:8080"
+    networks:
+      - monitoring
+
+  message-queue:
+    image: rabbitmq:management
+    ports:
+      - "15672:15672"  # RabbitMQ management UI
+      - "5672:5672"    # RabbitMQ default port for messaging
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Mount prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3002:3000"  # Expose Grafana UI on port 3002
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  mongodb_data:

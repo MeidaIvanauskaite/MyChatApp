@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s  # Scrape every 15 seconds
+
+scrape_configs:
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:5000']  # Replace 'backend' with your backend container's name or service in docker-compose.yml
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']  # Replace 'redis' with your Redis container's name or service in docker-compose.yml
+
+  # Add additional scrape configurations for other services as needed
